@@ -1,7 +1,7 @@
-<template>
+npm <template>
   <div>
     <h2>Pokémon Evolutions</h2>
-    <!--
+    
   <form v-on:submit.prevent="getPokemonCards">
     <p>
       Enter Pokemon name:
@@ -9,7 +9,7 @@
       <button type="submit">Go</button>
     </p>
   </form>
-    -->
+    
     <form v-on:submit.prevent="getPokemonData">
       <p>
         Enter Pokemon name or id:
@@ -43,6 +43,10 @@
       </div>
       <div class="row">
         <div class="col col-3">
+          <!--
+          <h2> Basic </h2>
+          <div  v-for="evos in in pokeEvos.types" v-bind:class="row" :key="evo.species.name">{{type}}>
+            -->
           <h3>Bulbasaur </h3>
               <div class="card"><img src="https://images.pokemontcg.io/ex6/55.png"></div>
         </div>
@@ -108,6 +112,7 @@ export default {
       pokeAbilities: [],
       evolutionChainURL: "",
       evolutionChain: null,
+      pokeEvo: null,
       pokeEvos: []
     };
   },
