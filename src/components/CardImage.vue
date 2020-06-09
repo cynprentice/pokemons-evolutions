@@ -3,11 +3,9 @@
     <div class="messages">
       <message-container v-bind:messages="messages"></message-container>
     </div>
-    <div class="cardImage">
+    <div class="card-container">
       <load-spinner v-if="showLoading"></load-spinner>
-      <img v-bind:src="imageURL">
-      <br>
-      <b>{{ name }}</b>
+      <img class="card-image" v-bind:src="imageURL">
     </div>
   </div>
 </template>
@@ -28,25 +26,26 @@ export default {
     return {
       cards: {},
       messages: [],
+      pokemonCardURL: "https://api.pokemontcg.io/v1/cards/",
       imageURL: "",
       showLoading: false
     }
   },
   props: {
-    name: {}
+    pokedexNumber: {}
   },
 created () {
-      console.log("CardImage.vue called with " + this.name);
+      console.log("CardImage.vue called with " + this.pokedexNumber);
      this.showLoading = true;
       axios
-        .get("https://api.pokemontcg.io/v1/cards/", {
+        .get(this.pokemonCardURL, {
           params: {
-            name: this.name          }
+            nationalPokedexNumber: this.pokedexNumber          }
         })
         .then(response => {
           this.cards = response.data.cards;
           this.imageURL = this.cards[0].imageUrl
-          console.log("the image url for " + this.name + " :" + this.imageURL);
+          console.log("the image url for " + this.pokedexNumber + " :" + this.imageURL);
           this.showLoading = false;
         })
         .catch(error => {
@@ -62,9 +61,12 @@ created () {
 </script>
 
 <style scoped>
-  .cardImage {
-    display: inline-block;
-    width: 100px;
+  .card-image {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 90%;
+    max-width: 250px;
   }
  
 </style>

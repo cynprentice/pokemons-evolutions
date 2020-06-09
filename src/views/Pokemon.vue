@@ -2,8 +2,7 @@
   <div>
     <h2>Pokémon Details</h2>
     <p>
-      <router-link to="/">Home</router-link> |
-     <!-- <router-link v-bind:to="{ name: 'Evolutions', params: { cityId: $route.params.cityId } }">View Evolution Chain</router-link>-->
+     <router-link v-bind:to="{ name: 'Evolutions', params: { pokedexNumber: $route.params.pokedexNumber } }">View Evolution Chain</router-link>
     </p>
     <div class="messages">
       <message-container v-bind:messages="messages"></message-container>
@@ -12,12 +11,12 @@
     <div class="container">
 
       <div class="row">
-        <div class="col-1"> <h2>{{this.$route.params.name}}</h2> </div>
+        <div class="col-1"> <h2>{{this.$route.params.pokedexNumber}}</h2> </div>
       </div>
       <div class="row">
         <div class="col col-2">
           <load-spinner v-if="showLoading"></load-spinner>
-          <card-image v-bind:name="$route.params.name"></card-image>
+          <card-image v-bind:pokedexNumber="$route.params.pokedexNumber"></card-image>
         </div>
         <div class="col col-2">
           <h3>{{this.name}} Stats </h3>
@@ -102,7 +101,7 @@ components: {
     };
   },
 created () {    
-    this.pokemonURL = "//pokeapi.co/api/v2/pokemon/" + this.$route.params.name;
+    this.pokemonURL = "//pokeapi.co/api/v2/pokemon/" + this.$route.params.pokedexNumber;
      console.log("called Pokemon.vue getting poke data with URL: " + this.pokemonURL);
      this.showLoading = true;
       axios
@@ -128,12 +127,12 @@ created () {
        
       });
   
-        console.log("called Pokemon.vue getting cards for " + this.$route.params.name);
+        console.log("called Pokemon.vue getting cards for " + this.$route.params.pokedexNumber);
         this.showLoading = true;
        axios
         .get("https://api.pokemontcg.io/v1/cards/", {
           params: {
-            name: this.$route.params.name
+            nationalPokedexNumber: this.$route.params.PokedexNumber
           }
         })
         .then(response => {

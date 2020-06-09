@@ -14,7 +14,7 @@ Vue.use(VueRouter)
       component: Evolutions
     },
     {
-      path: '/:name/pokemon',
+      path: '/:pokedexNumber/pokemon',
       name: 'Pokemon',
       component: Pokemon
     }
