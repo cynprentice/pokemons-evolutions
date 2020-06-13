@@ -14,6 +14,7 @@
 import axios from 'axios';
 import CubeSpinner from '@/components/CubeSpinner';
 import MessageContainer from '@/components/MessageContainer';
+import { pokemonCardURL } from '@/common/URL.js';
 
 export default {
   name: 'CardImage',
@@ -24,9 +25,8 @@ export default {
   }, 
   data () {
     return {
-      cards: {},
+      pokeCardResults: {},
       messages: [],
-      pokemonCardURL: "https://api.pokemontcg.io/v1/cards/",
       imageURL: "",
       showLoading: false
     }
@@ -35,16 +35,28 @@ export default {
     pokedexNumber: {}
   },
 created () {
-      console.log("CardImage.vue called with " + this.pokedexNumber);
-     this.showLoading = true;
+    //console.log("CardImage.vue called with " + this.pokedexNumber);
+    this.showLoading = true;
+    let cacheLabel = 'pokeCards_' + this.pokedexNumber;
+    let cacheExpiry = 15 * 60 * 1000; // 15 minutes
+
+    if (this.$ls.get(cacheLabel)){
+      console.log('pokeCard cached query detected.');
+      this.pokeCardResults = this.$ls.get(cacheLabel);
+       this.imageURL = this.pokeCardResults[0].imageUrl
+      this.showLoading = false;
+    } else {
+      console.log('No pokeCard cache available. Making API request.');
       axios
-        .get(this.pokemonCardURL, {
+        .get(pokemonCardURL, {
           params: {
             nationalPokedexNumber: this.pokedexNumber          }
         })
         .then(response => {
-          this.cards = response.data.cards;
-          this.imageURL = this.cards[0].imageUrl
+          this.$ls.set(cacheLabel, response.data.cards, cacheExpiry);
+          console.log('New query has been cached as: ' + cacheLabel);
+          this.pokeCardResults = response.data.cards;
+          this.imageURL = this.pokeCardResults[0].imageUrl
           //console.log("the image url for " + this.pokedexNumber + " :" + this.imageURL);
           this.showLoading = false;
         })
@@ -54,9 +66,9 @@ created () {
           text: "Error retrieving card image: " + error.message
         });
         this.showLoading = false;
-       
       });
-}
+    }
+  }
 }
 </script>
 

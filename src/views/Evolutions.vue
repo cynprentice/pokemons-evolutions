@@ -2,11 +2,10 @@
   <div>
     <h2>Pokémon Search</h2>
 
-
     <form class="form" v-on:submit.prevent="getPokemonSpeciesData">
       <p>
         Enter Pokémon Name or National Pokédex Number:
-        <input type="text" v-model="query" placeholder="Pancham or 674" />
+        <input type="text" v-model="query" placeholder="Wurmple or 265" />
         <button type="submit">Go</button>
       </p>
     </form>
@@ -17,44 +16,54 @@
       <div v-if="messages.length > 0" class="messages">
         <message-container v-bind:messages="messages"></message-container>
       </div>
+
+      <!-- If user query has results, show matching pokemon and sprite here -->
     <div  v-if="hasBasic" >
       <div class="row">
-        <div class="col column-1">
+        <div class="column-1">
           <span><img class="sprite-image" v-bind:src="spriteURL"> </span>
             <h2>#{{this.nationalPokedexNumber}}  {{this.name}} Evolutions</h2>
         </div>
       </div>
       
+      <!-- Show evolutions here -->
       <div class="row evolutions">
-        <div class="col column-3 basic-column" >
+        <div class="column-3 basic-column" >
           <h2> Base </h2>
           <ul class="pokedex" v-for="evo in basicPokeEvos" :key="evo.pokedexNumber">
-            <li><button type="button" class="button"> <h3><router-link v-bind:to="{ name: 'Pokemon', params: { pokedexNumber: evo.pokedexNumber } }">{{evo.pokedexNumber}}: {{evo.species}}</router-link></h3> </button>
+            <li><button type="button" class="button"> <h3>
+              <router-link v-bind:to="{ name: 'Pokemon', params: { pokedexNumber: evo.pokedexNumber } }">{{evo.pokedexNumber}}: {{evo.species}}</router-link></h3> </button>
             </li>
-            <li><card-image v-bind:pokedexNumber="evo.pokedexNumber"></card-image>
+            <li><router-link v-bind:to="{ name: 'Pokemon', params: { pokedexNumber: evo.pokedexNumber } }">
+              <card-image v-bind:pokedexNumber="evo.pokedexNumber"></card-image>
+              </router-link>
             </li>
           </ul>
         </div>
 
-      <div v-if="hasStage1" class="col column-3 stage-1-column" >
+      <div v-if="hasStage1" class="column-3 stage-1-column" >
         <h2> 1st Evolution </h2>
          <ul class="pokedex" v-for="evo in stage1PokeEvos" :key="evo.pokedexNumber">
             <li><button type="button" class="button"> <h3><router-link v-bind:to="{ name: 'Pokemon', params: { pokedexNumber: evo.pokedexNumber } }">{{evo.pokedexNumber}}: {{evo.species}}</router-link></h3> </button>
             </li>
-            <li><card-image v-bind:pokedexNumber="evo.pokedexNumber"></card-image>
+            <li><router-link v-bind:to="{ name: 'Pokemon', params: { pokedexNumber: evo.pokedexNumber } }">
+              <card-image v-bind:pokedexNumber="evo.pokedexNumber"></card-image>
+              </router-link>
             </li>
           </ul>
       </div>
-      <div v-else class="col column-3 stage-1-column">
+      <div v-else class="column-3 stage-1-column">
         <h2>No Stage 1 Evolution</h2>
       </div>
 
-      <div v-if="hasStage2" class="col column-3 stage-2-column">
+      <div v-if="hasStage2" class="column-3 stage-2-column">
         <h2> 2nd Evolution </h2>
           <ul class="pokedex" v-for="evo in stage2PokeEvos" :key="evo.pokedexNumber">
             <li><button type="button" class="button"> <h3><router-link v-bind:to="{ name: 'Pokemon', params: { pokedexNumber: evo.pokedexNumber } }">{{evo.pokedexNumber}}: {{evo.species}}</router-link></h3> </button>
             </li>
-            <li><card-image v-bind:pokedexNumber="evo.pokedexNumber"></card-image>
+              <li><router-link v-bind:to="{ name: 'Pokemon', params: { pokedexNumber: evo.pokedexNumber } }">
+              <card-image v-bind:pokedexNumber="evo.pokedexNumber"></card-image>
+              </router-link>
             </li>
           </ul>
       </div>
@@ -74,6 +83,10 @@ import axios from 'axios';
 import CubeSpinner from '@/components/CubeSpinner';
 import MessageContainer from '@/components/MessageContainer';
 import CardImage from '@/components/CardImage';
+//import URLs
+import { pokemonSpeciesURL } from '@/common/URL.js';
+import { evolutionChainURL } from '@/common/URL.js';
+import { pokemonURL } from '@/common/URL.js';
 
 export default {
   name: "PokeSearch",
@@ -86,25 +99,20 @@ export default {
   data() {
     return {
       //For API calls
-      pokemonSpeciesURL: "//pokeapi.co/api/v2/pokemon-species/",
       pokemonSpeciesResults: null,
-      evolutionChainURL: "https://pokeapi.co/api/v2/evolution-chain/",
       evolutionChainResults: null,
-      pokemonURL:  "//pokeapi.co/api/v2/pokemon/", 
       pokeResults: null,
-    
       messages: [],
       query: "",   
       showLoading: false,
 
-
-//attributes for user requested Pokemon
+      //attributes for user requested Pokemon
       name: "",
       nationalPokedexNumber: "",
       evolutionChainId: "",
       spriteURL: "",
 
-//For holding evolution data
+      //For holding evolution data
       basicPokeEvos:[],
       hasBasic: false,
       stage1PokeEvos: [],
@@ -112,9 +120,9 @@ export default {
       stage2PokeEvos: [],
       hasStage2: false,
       otherPokeEvos:[]
-      
     };
   },
+
   created () {
     if (this.$route.params.pokedexNumber){
       this.query = this.$route.params.pokedexNumber
@@ -124,7 +132,7 @@ export default {
 
   methods: {
 
-    //Process User Request, make API call to get Pokemon Species data and kick off evolution data requests
+    //make API call to get Pokemon Species data based on user request and kick off evolution data requests
     getPokemonSpeciesData: function() {
      //reset data
       this.evolutionChain = null;
@@ -140,7 +148,7 @@ export default {
       this.spriteURL = "";
       this.messages =[];
 
-      console.log("******called getPokemonSpeciesData with " + this.query);
+      //console.log("******called getPokemonSpeciesData with " + this.query);
       if (this.query===''){
         this.messages.push({
           type: 'error',
@@ -158,7 +166,7 @@ export default {
           } else {
             console.log('No pokeSpecies cache available. Making API request.');
             axios
-            .get((this.pokemonSpeciesURL + this.query.toLowerCase()), {
+            .get((pokemonSpeciesURL + this.query.toLowerCase()), {
               params: {
               }
              })
@@ -184,7 +192,7 @@ export default {
       }
     },
 
-    //Set attributes based in pokeSpeciesData and get evolutionChainURL
+    //Set attributes based in pokeSpeciesData and get kick off evolution chain data call
     setPokemonSpecies: function() {
       this.hasBasic = true;
       this.evolutionChainId = this.getIDFromURL(this.pokemonSpeciesResults.evolution_chain.url)
@@ -207,7 +215,7 @@ export default {
       } else {
       console.log('No evolutionChain cache available. Making API request.');
         axios
-          .get(this.evolutionChainURL + this.evolutionChainId, {})
+          .get(evolutionChainURL + this.evolutionChainId, {})
           .then(response => {
             this.$ls.set(cacheLabel, response.data, cacheExpiry);
             console.log('New query has been cached as: ' + cacheLabel);
@@ -225,6 +233,7 @@ export default {
       }
     },
 
+    //set base pokemon data and look for evolutions
     setEvolutionChain: function() {
       this.evolutionChainId = this.evolutionChainResults.id;
       let species = this.evolutionChainResults.chain.species.name;
@@ -239,6 +248,7 @@ export default {
       this.setEvolutions(1, this.evolutionChainResults.chain.evolves_to);
     },
 
+  //loop through evolution data to store level 1 and level 2 evolutions
     setEvolutions: function(evoLevel, evoArray) {
       //console.log("called getEvolutions with level " + evoLevel + " and evolvesTo Array " + evoArray);
         let pokeEvo= null;
@@ -260,7 +270,7 @@ export default {
     },
 
     //Takes a National Pokedex number, retrieves Pokemon data and SpriteURL
-  getSprite: function(id){
+    getSprite: function(id){
      this.showLoading = true;
      let cacheLabel = 'pokemon_' + id;
      let cacheExpiry = 15 * 60 * 1000; // 15 minutes
@@ -273,7 +283,7 @@ export default {
      } else {
       console.log('No pokemon cache available. Making API request.');
       axios
-        .get((this.pokemonURL +  id), {
+        .get((pokemonURL +  id), {
           params: {
           }
         })
@@ -312,28 +322,11 @@ export default {
 </script>
 
 <style>
-body {
-  font-family: sans-serif;
-  background-color: white;
-}
 
-.form {
-  margin: 2rem 4rem;
-}
 .evolutions {
   border: 3px solid #c7a008;
   box-shadow: 2px 2px 8px 5px #c7a008;
 }
-.column-1 {
-  float: left;
-  width: 100%;
-}
-
-.column-3 {
-  float: left;
-  width: 33.33%;
-}
-
 .evolutions {
   background-color: lightgoldenrodyellow;
 }
@@ -350,15 +343,7 @@ body {
   background-color: #2a75bb;
 }
 
-.row {
-  margin: 1rem;
-}
-/* Clear floats after the columns */
-.row:after {
-  content: "";
-  display: table;
-  clear: both;
-}
+
 
 /* Style buttons */
 .button {
@@ -383,23 +368,12 @@ body {
     color: #3c5aa6;
 }
 
-ul {
-  list-style-type: none;
-  padding: 0px;
-}
+
 
 .pokedex {
   border-top: 2px solid #3c5aa6;
   padding-bottom: 1rem;
  
-}
-
-
-h2,
-h3 {
-  font-family: sans-serif;
-  text-align: center;
-  text-transform: uppercase;
 }
 
 .sprite-image {

@@ -4,7 +4,6 @@
     <button type="button" class="button  fixed-width-button"><h3>
      <router-link v-bind:to="{ name: 'Evolutions', params: { pokedexNumber: $route.params.pokedexNumber } }">View Evolution Chain</router-link>
     </h3> </button>
-
    
     <div class="container">
 
@@ -64,6 +63,7 @@ import axios from "axios";
 import CubeSpinner from '@/components/CubeSpinner';
 import MessageContainer from '@/components/MessageContainer';
 import CardCarousel from '@/components/CardCarousel';
+import { pokemonURL } from '@/common/URL.js';
 
 export default {
   name: "PokeData",
@@ -82,7 +82,6 @@ components: {
       name: "",
       height: "unknown",
       weight: "unknown",
-      pokemonURL: "//pokeapi.co/api/v2/pokemon/",
       pokeTypes: [],
       pokeAbilities: [],
       pokeMoves: [],
@@ -91,20 +90,20 @@ components: {
   },
 
 created () {    
-     console.log("called Pokemon.vue getting poke data with URL: " + this.pokemonURL);
-     this.showLoading = true;
-     let cacheLabel = 'pokemon_' + this.$route.params.pokedexNumber;
-     let cacheExpiry = 15 * 60 * 1000; // 15 minutes
-
-     if (this.$ls.get(cacheLabel)){
+    console.log("called Pokemon.vue getting Poke data for: " + this.$route.params.pokedexNumber);
+    this.showLoading = true;
+    let cacheLabel = 'pokemon_' + this.$route.params.pokedexNumber;
+    let cacheExpiry = 15 * 60 * 1000; // 15 minutes
+    
+    if (this.$ls.get(cacheLabel)){
       console.log('Pokemon.vue Pokemon cached query detected.');
       this.pokeResults = this.$ls.get(cacheLabel);
       this.setPokemonData();
       this.showLoading = false;
-     } else {
+    } else {
       console.log('No pokemon cache available. Making API request.');
       axios
-        .get((this.pokemonURL +  this.$route.params.pokedexNumber ), {
+        .get((pokemonURL +  this.$route.params.pokedexNumber ), {
           params: {
           }
         })
@@ -128,7 +127,6 @@ created () {
   methods: {
 
     setPokemonData: function() {
-      console.log ("setting Pokemon data for " + this.pokeResults.name)
       this.name = this.pokeResults.name;
       this.height = this.pokeResults.height;
       this.weight = this.pokeResults.weight;
