@@ -1,9 +1,9 @@
 <template>
   <div>
-    <h2>Pokémon Details</h2>
-    <p>
+     <h2>{{this.$route.params.pokedexNumber}}: {{this.name}} Details</h2>
+    <button type="button" class="button  fixed-width-button"><h3>
      <router-link v-bind:to="{ name: 'Evolutions', params: { pokedexNumber: $route.params.pokedexNumber } }">View Evolution Chain</router-link>
-    </p>
+    </h3> </button>
     <div class="messages">
       <message-container v-bind:messages="messages"></message-container>
     </div>
@@ -11,26 +11,40 @@
     <div class="container">
 
       <div class="row">
-        <div class="col-1"> <h2>{{this.$route.params.pokedexNumber}}</h2> </div>
+        <div class="column-1"> </div>
       </div>
       <div class="row">
-        <div class="col col-2">
+        <div class="column-2">
           <load-spinner v-if="showLoading"></load-spinner>
-          <card-image v-bind:pokedexNumber="$route.params.pokedexNumber"></card-image>
+          <card-carousel class="card-carousel" v-bind:pokedexNumber="$route.params.pokedexNumber"></card-carousel>
+
         </div>
-        <div class="col col-2">
-          <h3>{{this.name}} Stats </h3>
-          <p><strong>Height:</strong>{{this.height}} decimeters</p>
-          <p><strong>Weight:</strong>{{this.weight}} hectograms</p>
-          <div><strong>Types:</strong>
-            <ul>
-              <li v-for="type in pokeTypes" :key="type.type.name">{{type.type.name}}</li>
+        <div class="column-2">
+          <h3>Size</h3>
+          <ul  class="pokestat">
+            <li><strong>Height:</strong> {{this.height}} decimeters</li>
+            <li><strong>Weight:</strong> {{this.weight}} hectograms</li>
+          </ul>
+          <div><h3 v-if="pokeTypes.length<=1"> Type</h3>
+              <h3 v-else>Types</h3>
+            <ul  class="poketype">
+              <li v-for="type in pokeTypes"  v-bind:class="type.type.name" :key="type.type.name">{{type.type.name}}</li>
             </ul>
           </div>
-          <div><strong>Abilities</strong>
-            <ul>
+          <div><h3 v-if="pokeAbilities.length<=1">Ability</h3>
+              <h3 v-else>Abilities</h3>
+            <ul  class="pokestat">
               <li v-for="ability in pokeAbilities" :key="ability.ability.name">
                 {{ability.ability.name}}
+              </li>
+            </ul>
+          </div>
+
+           <div><h3 v-if="pokeMoves.length<=1">Move</h3>
+              <h3 v-else>Moves</h3>
+            <ul  class="pokestat">
+              <li v-for="move in pokeMoves" :key="move.move.name">
+                {{move.move.name}}
               </li>
             </ul>
           </div>
@@ -72,8 +86,7 @@
 import axios from "axios";
 import CubeSpinner from '@/components/CubeSpinner';
 import MessageContainer from '@/components/MessageContainer';
-import CardImage from '@/components/CardImage';
-
+import CardCarousel from '@/components/CardCarousel';
 
 export default {
   name: "PokeData",
@@ -81,8 +94,9 @@ export default {
 components: {
     'load-spinner': CubeSpinner,
     'message-container': MessageContainer,
-    'card-image': CardImage
+    'card-carousel': CardCarousel
   },
+
   data() {
     return {
       pokeResults: null,
@@ -90,12 +104,12 @@ components: {
       messages: [],
       showLoading: false,
       name: "",
-      NationalPokedexNumber: "",
-      height: 111,
-      weight: 222,
+      height: "unknown",
+      weight: "unknown",
       pokemonURL: "//pokeapi.co/api/v2/pokemon/",
       pokeTypes: [],
       pokeAbilities: [],
+      pokeMoves: [],
       pokeImageURL: ""
       
     };
@@ -115,6 +129,7 @@ created () {
           this.height = this.pokeResults.height;
           this.weight = this.pokeResults.weight;
           this.pokeTypes = this.pokeResults.types;
+          this.pokeMoves = this.pokeResults.moves;
           this.pokeAbilities = this.pokeResults.abilities;
           this.showLoading = false;
         })
@@ -154,92 +169,37 @@ created () {
 </script>
 
 <style>
-body {
-  font-family: sans-serif;
-  background-color: white;
-}
 
-
-
-.col-1 {
+.column-2 {
   float: left;
-  width: 100%;
+  width: 50%;
 }
 
-.col-2 {
-  float: left;
-  width: 45%;
+.card-carousel {
+  margin: 2rem 0;
 }
-
-.col-3 {
-  float: left;
-  width: 30%;
+.fixed-width-button {
+  width: 300px;
 }
-
-
-/* Clear floats after the columns */
-.row:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-.col > .card {
-    margin: auto;
-  width: 80%;
-    padding: 10px;
-    
-}
-
-ul {
-  list-style-type: none;
-  padding: 0px;
-}
-
-.pokedex {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: center;
-}
-
-.pokedex img {
-  width: 100%;
-}
-
-.pokedex > div {
-  padding: 1rem;
-  border: solid;
-  border-width: 3px;
-  border-color: black;
-  background-color: white;
-}
-
-h2,
-h3 {
-  font-family: sans-serif;
+.pokestat, .poketype {
   text-align: center;
-  text-transform: uppercase;
+  background-color: lightgoldenrodyellow;
+  max-width: 700px;
+  margin:auto;
+  padding: 1rem 2rem;
 }
 
-.stats {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: center;
-}
-
-.stats > li {
+.pokestat li {
+  display: inline-block;
   padding: 0.1rem 0.5rem;
+  
 }
 
-.poketype {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: center;
-}
 .poketype li {
   display: inline;
   padding: 0.1rem 0.5rem;
   margin: 0 0.5rem;
+  
 }
 .poketype li {
   font-family: sans-serif;
@@ -320,12 +280,5 @@ h3 {
   background-color: #6890f0;
 }
 
-@media screen and (min-width: 800px) {
-  .pokedex {
-    margin: 0 auto;
-  }
-  .pokedex > div {
-    max-width: 400px;
-  }
-}
+
 </style>

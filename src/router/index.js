@@ -2,10 +2,11 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Evolutions from '@/views/Evolutions'
 import Pokemon from '@/views/Pokemon'
-
+import VueCarousel from 'vue-carousel';
 
 
 Vue.use(VueRouter)
+Vue.use(VueCarousel);
 
   const routes = [
     {

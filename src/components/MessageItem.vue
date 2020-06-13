@@ -2,7 +2,6 @@
   <transition name="fade" appear tag="div">
     <li v-bind:class="[message.type, 'message']" v-show="showMessage">
       {{ message.text }}
-      <button v-on:click="close">close</button>
     </li>
   </transition>
 </template>
@@ -28,9 +27,7 @@ export default {
       this.showMessage = false;
     }
   },
-  created () {
-    setTimeout(this.close, 15000);
-  }
+
 }
 </script>
 
@@ -38,11 +35,11 @@ export default {
 .message {
   margin: 5px auto;
   padding: 5px;
-  font-size: 1rem;
+  font-size: 1.5rem;
   width: 60%;
 }
 .error {
-  background: pink;
+  background: #FFF;
   color: red;
 }
 .success {

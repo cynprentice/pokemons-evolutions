@@ -5,7 +5,14 @@
     </div>
     <div class="card-container">
       <load-spinner v-if="showLoading"></load-spinner>
-      <img class="card-image" v-bind:src="imageURL">
+    
+      <carousel :per-page="1" >
+      <slide v-for="card in cards" :key="card.id">
+             <img class="card-image" v-bind:src="card.imageUrl">
+              <p class="card-caption"> <strong>Set:</strong> {{card.set}} <strong>ID:</strong> {{card.id}} </p>
+         <p class="card-caption"><strong>Rarity:</strong> {{card.rarity}}<strong> Artist:</strong> {{card.artist}}</p>
+    </slide>
+        </carousel>
     </div>
   </div>
 </template>
@@ -69,6 +76,8 @@ created () {
     max-width: 250px;
   }
 
-
+  .card-caption {
+    text-align: center;
+  }
  
 </style>
