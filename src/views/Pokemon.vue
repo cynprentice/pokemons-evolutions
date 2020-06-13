@@ -4,9 +4,7 @@
     <button type="button" class="button  fixed-width-button"><h3>
      <router-link v-bind:to="{ name: 'Evolutions', params: { pokedexNumber: $route.params.pokedexNumber } }">View Evolution Chain</router-link>
     </h3> </button>
-    <div class="messages">
-      <message-container v-bind:messages="messages"></message-container>
-    </div>
+
    
     <div class="container">
 
@@ -14,12 +12,17 @@
         <div class="column-1"> </div>
       </div>
       <div class="row">
+        <!-- Add Image Carousel for Pokemon cards -->
         <div class="column-2">
           <load-spinner v-if="showLoading"></load-spinner>
           <card-carousel class="card-carousel" v-bind:pokedexNumber="$route.params.pokedexNumber"></card-carousel>
-
         </div>
+
+      <!--Column for Pokemon Information -->
         <div class="column-2">
+          <div v-if="messages.length > 0" class="messages">
+            <message-container v-bind:messages="messages"></message-container>
+          </div>
           <h3>Size</h3>
           <ul  class="pokestat">
             <li><strong>Height:</strong> {{this.height}} decimeters</li>
@@ -50,32 +53,6 @@
           </div>
         </div>
       </div>
-           <!-- Display Image of the Pokemon 
-          <div v-for="card in cards" :key="card.id">
-      <h2>{{card.name}}</h2>
-      <img v-bind:src="card.imageURL" />
-      <h3>National Index #{{card.nationalPokedexNumber}}</h3>
-      <p>subtype: {{card.Basic}}</p>
-      <p>supertype{{card.supertype}}</p>
-      <p>hp{{card.hp}}</p>
-      <p>supertype{{card.supertype}}</p>-->
-
-      <!--<ul class="stats">
-        <li>
-          <strong>Height:</strong>
-          {{pokemon.height | inchesToFeet}}
-        </li>
-        <li>
-          <strong>Weight:</strong>
-          {{pokemon.weight}} lbs
-        </li>
-      </ul>
-      <h3 v-if="pokemon.types.length<=1">Type</h3>
-      <h3 v-else>Types:</h3>
-      <ul class="poketype">
-        <li v-for="type in pokemon.types" v-bind:class="type" :key="type">{{type}}</li>
-      </ul>
-      -->
     </div>
   </div>
 </template>
@@ -100,7 +77,6 @@ components: {
   data() {
     return {
       pokeResults: null,
-      cardResults: null,
       messages: [],
       showLoading: false,
       name: "",
@@ -110,60 +86,57 @@ components: {
       pokeTypes: [],
       pokeAbilities: [],
       pokeMoves: [],
-      pokeImageURL: ""
       
     };
   },
+
 created () {    
-    this.pokemonURL = "//pokeapi.co/api/v2/pokemon/" + this.$route.params.pokedexNumber;
      console.log("called Pokemon.vue getting poke data with URL: " + this.pokemonURL);
      this.showLoading = true;
+     let cacheLabel = 'pokemon_' + this.$route.params.pokedexNumber;
+     let cacheExpiry = 15 * 60 * 1000; // 15 minutes
+
+     if (this.$ls.get(cacheLabel)){
+      console.log('Pokemon.vue Pokemon cached query detected.');
+      this.pokeResults = this.$ls.get(cacheLabel);
+      this.setPokemonData();
+      this.showLoading = false;
+     } else {
+      console.log('No pokemon cache available. Making API request.');
       axios
-        .get((this.pokemonURL), {
+        .get((this.pokemonURL +  this.$route.params.pokedexNumber ), {
           params: {
           }
         })
         .then(response => {
+          this.$ls.set(cacheLabel, response.data, cacheExpiry);
+          console.log('New query has been cached as: ' + cacheLabel);
           this.pokeResults = response.data;
-          this.name = this.pokeResults.name;
-          this.height = this.pokeResults.height;
-          this.weight = this.pokeResults.weight;
-          this.pokeTypes = this.pokeResults.types;
-          this.pokeMoves = this.pokeResults.moves;
-          this.pokeAbilities = this.pokeResults.abilities;
-          this.showLoading = false;
+          this.setPokemonData();
+          this.showLoading = false; 
         })
         .catch(error => {
           this.messages.push({
             type: 'error',
-            text: error.message
+            text: "Error retrieving Pokémon data: " + error.message
           });
-              this.showLoading = false;
-       
+          this.showLoading = false; 
       });
-  
-        console.log("called Pokemon.vue getting cards for " + this.$route.params.pokedexNumber);
-        this.showLoading = true;
-       axios
-        .get("https://api.pokemontcg.io/v1/cards/", {
-          params: {
-            nationalPokedexNumber: this.$route.params.PokedexNumber
-          }
-        })
-        .then(response => {
-          this.cardResults = response.data.cards;
-          this.pokeImageURL = this.cardResults[0].imageUrl;
-          this.showLoading = false;
-        })
-        .catch(error => {
-          this.messages.push({
-            type: 'error',
-            text: error.message
-          });
-          this.showLoading = false;
-       
-      });
-}
+     }
+    },
+    
+  methods: {
+
+    setPokemonData: function() {
+      console.log ("setting Pokemon data for " + this.pokeResults.name)
+      this.name = this.pokeResults.name;
+      this.height = this.pokeResults.height;
+      this.weight = this.pokeResults.weight;
+      this.pokeTypes = this.pokeResults.types;
+      this.pokeMoves = this.pokeResults.moves;
+      this.pokeAbilities = this.pokeResults.abilities;  
+    }
+  }
 }
   
 </script>
@@ -172,7 +145,8 @@ created () {
 
 .column-2 {
   float: left;
-  width: 50%;
+  width: 40%;
+  padding: 2rem;
 }
 
 .card-carousel {

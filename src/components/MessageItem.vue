@@ -35,12 +35,14 @@ export default {
 .message {
   margin: 5px auto;
   padding: 5px;
-  font-size: 1.5rem;
-  width: 60%;
+  font-size: 1.3rem;
+  width: 85%;
+  text-align: center;
 }
 .error {
   background: #FFF;
   color: red;
+
 }
 .success {
   background: green;

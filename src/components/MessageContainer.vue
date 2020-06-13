@@ -22,8 +22,9 @@ export default {
 
 <style scoped>
 .message-container {
-  width: 100vw;
+ border: 2px solid #000;
 }
+
 ul {
   list-style-type: none;
   padding: 0;

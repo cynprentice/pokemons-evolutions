@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Evolutions from '@/views/Evolutions'
 import Pokemon from '@/views/Pokemon'
+import About from '@/views/About'
 import VueCarousel from 'vue-carousel';
 
 
@@ -18,6 +19,11 @@ Vue.use(VueCarousel);
       path: '/:pokedexNumber/pokemon',
       name: 'Pokemon',
       component: Pokemon
+    },
+    {
+      path: '/about',
+      name: 'About',
+      component: About
     }
 ]
 

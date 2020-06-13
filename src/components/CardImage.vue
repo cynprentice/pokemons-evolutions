@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="messages">
+    <div v-if="messages.length > 0" class="messages">
       <message-container v-bind:messages="messages"></message-container>
     </div>
     <div class="card-container">
@@ -45,13 +45,13 @@ created () {
         .then(response => {
           this.cards = response.data.cards;
           this.imageURL = this.cards[0].imageUrl
-          console.log("the image url for " + this.pokedexNumber + " :" + this.imageUrl);
+          //console.log("the image url for " + this.pokedexNumber + " :" + this.imageURL);
           this.showLoading = false;
         })
         .catch(error => {
         this.messages.push({
           type: 'error',
-          text: error.message
+          text: "Error retrieving card image: " + error.message
         });
         this.showLoading = false;
        

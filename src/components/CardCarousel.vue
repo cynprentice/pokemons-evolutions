@@ -1,11 +1,11 @@
 <template>
   <div>
-    <div class="messages">
-      <message-container v-bind:messages="messages"></message-container>
-    </div>
+   
     <div class="card-container">
       <load-spinner v-if="showLoading"></load-spinner>
-    
+     <div v-if="messages.length > 0" class="messages">
+      <message-container v-bind:messages="messages"></message-container>
+    </div>
       <carousel :per-page="1" >
       <slide v-for="card in cards" :key="card.id">
              <img class="card-image" v-bind:src="card.imageUrl">
@@ -34,7 +34,6 @@ export default {
       cards: {},
       messages: [],
       pokemonCardURL: "https://api.pokemontcg.io/v1/cards/",
-      imageURL: "",
       showLoading: false
     }
   },
@@ -42,23 +41,22 @@ export default {
     pokedexNumber: {}
   },
 created () {
-      console.log("CardImage.vue called with " + this.pokedexNumber);
+      console.log("CardCarousel.vue called with " + this.pokedexNumber);
      this.showLoading = true;
       axios
         .get(this.pokemonCardURL, {
           params: {
-            nationalPokedexNumber: this.pokedexNumber          }
+            nationalPokedexNumber: this.pokedexNumber
+          }
         })
         .then(response => {
           this.cards = response.data.cards;
-          this.imageURL = this.cards[0].imageUrl
-          console.log("the image url for " + this.pokedexNumber + " :" + this.imageUrl);
           this.showLoading = false;
         })
         .catch(error => {
         this.messages.push({
           type: 'error',
-          text: error.message
+          text: "Error retrieving card carousel images: " + error.message
         });
         this.showLoading = false;
        

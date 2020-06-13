@@ -3,7 +3,7 @@
     <h2>Pokémon Search</h2>
 
 
-    <form v-on:submit.prevent="getPokemonEvolutions">
+    <form class="form" v-on:submit.prevent="getPokemonSpeciesData">
       <p>
         Enter Pokémon Name or National Pokédex Number:
         <input type="text" v-model="query" placeholder="Pancham or 674" />
@@ -14,7 +14,7 @@
 
     <load-spinner v-if="showLoading"></load-spinner>
     <div v-else class="container">
-      <div class="messages">
+      <div v-if="messages.length > 0" class="messages">
         <message-container v-bind:messages="messages"></message-container>
       </div>
     <div  v-if="hasBasic" >
@@ -69,9 +69,8 @@
 </template>
 
 <script>
-// import data from pokedata.js file
+
 import axios from 'axios';
-//import {PokeAPI} from '@/common/PokeAPI';
 import CubeSpinner from '@/components/CubeSpinner';
 import MessageContainer from '@/components/MessageContainer';
 import CardImage from '@/components/CardImage';
@@ -86,15 +85,16 @@ export default {
   },  
   data() {
     return {
+      //For API calls
       pokemonSpeciesURL: "//pokeapi.co/api/v2/pokemon-species/",
       pokemonSpeciesResults: null,
       evolutionChainURL: "https://pokeapi.co/api/v2/evolution-chain/",
       evolutionChainResults: null,
-     
+      pokemonURL:  "//pokeapi.co/api/v2/pokemon/", 
+      pokeResults: null,
+    
       messages: [],
-      query: "", 
-
-      
+      query: "",   
       showLoading: false,
 
 
@@ -104,7 +104,7 @@ export default {
       evolutionChainId: "",
       spriteURL: "",
 
-//variables for holding evolution data
+//For holding evolution data
       basicPokeEvos:[],
       hasBasic: false,
       stage1PokeEvos: [],
@@ -118,13 +118,14 @@ export default {
   created () {
     if (this.$route.params.pokedexNumber){
       this.query = this.$route.params.pokedexNumber
-      this.getPokemonEvolutions();
+      this.getPokemonSpeciesData();
     }
   },
 
   methods: {
-    
-    getPokemonEvolutions: function() {
+
+    //Process User Request, make API call to get Pokemon Species data and kick off evolution data requests
+    getPokemonSpeciesData: function() {
      //reset data
       this.evolutionChain = null;
       this.basicPokeEvos = [];
@@ -138,86 +139,110 @@ export default {
       this.name = "";
       this.spriteURL = "";
       this.messages =[];
-    
 
-      console.log("called getPokemonEvolutions with " + this.query);
+      console.log("******called getPokemonSpeciesData with " + this.query);
       if (this.query===''){
         this.messages.push({
           type: 'error',
-          text: "Please enter a Pokémon name or National Pokédex Number.",
-          
+          text: "Please enter a Pokémon name or National Pokédex Number.", 
         });
       } else {
-        this.showLoading = true;
-        axios
-          .get((this.pokemonSpeciesURL + this.query.toLowerCase()), {
-            params: {
-            }
-          })
-          .then(response => {
-            
-            this.hasBasic = true;
-            this.pokemonSpeciesResults = response.data
-            this.evolutionChainId = this.getIDFromURL(this.pokemonSpeciesResults.evolution_chain.url)
-            this.name = this.pokemonSpeciesResults.name;
-            this.nationalPokedexNumber= this.pokemonSpeciesResults.id;
-            this.getSprite(this.nationalPokedexNumber);
-            console.log("evolution chain is " + this.evolutionChainURL);
-            this.getEvolutionChain();
-          })
-          .catch(error => {
-            let errorMessage = error.message;
-            if(errorMessage.includes("404")){
-              errorMessage = 'Your entry of "' + this.query + '" did not return any results. Please try again.'; 
-            }
-          this.messages.push({
-            type: 'error',
-            text: errorMessage,
-          });
-          this.showLoading = false;
-        });
+          this.showLoading = true;
+          let cacheLabel = 'pokeSpecies_' + this.query;
+          let cacheExpiry = 15 * 60 * 1000; // 15 minutes    
+          if (this.$ls.get(cacheLabel)){
+            console.log('pokeSpecies cached query detected.');
+            this.pokemonSpeciesResults = this.$ls.get(cacheLabel);
+            this.setPokemonSpecies();
+            this.showLoading = false;
+          } else {
+            console.log('No pokeSpecies cache available. Making API request.');
+            axios
+            .get((this.pokemonSpeciesURL + this.query.toLowerCase()), {
+              params: {
+              }
+             })
+            .then(response => {           
+              this.$ls.set(cacheLabel, response.data, cacheExpiry);
+              console.log('New query has been cached as: ' + cacheLabel);
+              this.pokemonSpeciesResults = response.data
+              this.setPokemonSpecies();
+              this.showLoading = false;
+            })
+            .catch(error => {
+              let errorMessage = error.message;
+              if(errorMessage.includes("404")){
+                errorMessage = 'Your entry of "' + this.query + '" did not return any results. Please try again.'; 
+              }
+             this.messages.push({
+              type: 'error',
+              text: errorMessage,
+              });
+             this.showLoading = false;
+            });
+          }
       }
     },
 
-    getEvolutionChain: function() {
-      axios
-        .get(this.evolutionChainURL + this.evolutionChainId, {})
-        .then(response => {
-          this.evolutionChainResults = response.data;
-          this.evolutionChainId = this.evolutionChainResults.id;
-          let species = this.evolutionChainResults.chain.species.name;
-          let pokedexNumber = this.getIDFromURL(this.evolutionChainResults.chain.species.url);
-          console.log("inside getEvolutionChain before calling getPokemonCards for " + species);
-          let pokeEvo = {
-            level: 0,
-            species: species,
-            pokedexNumber: pokedexNumber
-          };
-          this.basicPokeEvos.push(pokeEvo);
-          console.log(
-            "next evolvesTo is " + this.evolutionChainResults.chain.evolves_to
-          );
-          this.getEvolutions(1, this.evolutionChainResults.chain.evolves_to);
-         this.showLoading = false;
-        })
-        
-        .catch(error => {
-        this.messages.push({
-          type: 'error',
-          text: error.message
-        });
-      });
+    //Set attributes based in pokeSpeciesData and get evolutionChainURL
+    setPokemonSpecies: function() {
+      this.hasBasic = true;
+      this.evolutionChainId = this.getIDFromURL(this.pokemonSpeciesResults.evolution_chain.url)
+      this.name = this.pokemonSpeciesResults.name;
+      this.nationalPokedexNumber= this.pokemonSpeciesResults.id;
+      this.getSprite(this.nationalPokedexNumber);
+      this.getEvolutionChainData();
     },
 
-    getEvolutions: function(evoLevel, evoArray) {
-      console.log(
-        "called getEvolutions with level " +
-          evoLevel +
-          " and evolvesTo Array " +
-          evoArray
-      );
+    //make API call to get evolution chain data
+    getEvolutionChainData: function() {
+      let cacheLabel = 'evolutionChain_' + this.query;
+      let cacheExpiry = 15 * 60 * 1000; // 15 minutes
+      
+      if (this.$ls.get(cacheLabel)){
+        console.log('evolutionChain cached query detected.');
+        this.evolutionChainResults = this.$ls.get(cacheLabel);
+        this.setEvolutionChain();
+        this.showLoading = false;        
+      } else {
+      console.log('No evolutionChain cache available. Making API request.');
+        axios
+          .get(this.evolutionChainURL + this.evolutionChainId, {})
+          .then(response => {
+            this.$ls.set(cacheLabel, response.data, cacheExpiry);
+            console.log('New query has been cached as: ' + cacheLabel);
+            this.evolutionChainResults = response.data;
+            this.setEvolutionChain();
+            this.showLoading = false;
+          })
+        .catch(error => {
+          this.messages.push({
+          type: 'error',
+          text: "Error retrieving evolution chain: " + error.message
+        });
+         this.showLoading = false;
+       });
+      }
+    },
+
+    setEvolutionChain: function() {
+      this.evolutionChainId = this.evolutionChainResults.id;
+      let species = this.evolutionChainResults.chain.species.name;
+      let pokedexNumber = this.getIDFromURL(this.evolutionChainResults.chain.species.url);
+      let pokeEvo = {
+        level: 0,
+        species: species,
+        pokedexNumber: pokedexNumber
+      };
+      this.basicPokeEvos.push(pokeEvo);
+      //console.log("next evolvesTo is " + this.evolutionChainResults.chain.evolves_to);
+      this.setEvolutions(1, this.evolutionChainResults.chain.evolves_to);
+    },
+
+    setEvolutions: function(evoLevel, evoArray) {
+      //console.log("called getEvolutions with level " + evoLevel + " and evolvesTo Array " + evoArray);
         let pokeEvo= null;
-      console.log("evo array length is " + evoArray.length);
+      //console.log("evo array length is " + evoArray.length);
       for (let i = 0; i < evoArray.length; i++) {
         pokeEvo = { level: evoLevel, species: evoArray[i].species.name, pokedexNumber: this.getIDFromURL(evoArray[i].species.url) };
         if(evoLevel==1){
@@ -229,29 +254,44 @@ export default {
         } else {
           this.otherPokeEvos.push(pokeEvo);
         }
-        console.log("added " + evoArray[i].species.name + " to pokeEvos");
-        this.getEvolutions(evoLevel + 1, evoArray[i].evolves_to);
+        //console.log("added " + evoArray[i].species.name + " to pokeEvos");
+        this.setEvolutions(evoLevel + 1, evoArray[i].evolves_to);
       }
     },
-getSprite: function(id){
-   this.pokemonURL = "//pokeapi.co/api/v2/pokemon/" + id
-     console.log("called Pokemon.vue getting poke data with URL: " + this.pokemonURL);
+
+    //Takes a National Pokedex number, retrieves Pokemon data and SpriteURL
+  getSprite: function(id){
+     this.showLoading = true;
+     let cacheLabel = 'pokemon_' + id;
+     let cacheExpiry = 15 * 60 * 1000; // 15 minutes
+
+     if (this.$ls.get(cacheLabel)){
+      console.log('pokemon cached query detected.');
+      this.pokeResults = this.$ls.get(cacheLabel);
+      this.spriteURL = this.pokeResults.sprites.front_default;
+      this.showLoading = false;
+     } else {
+      console.log('No pokemon cache available. Making API request.');
       axios
-        .get((this.pokemonURL), {
+        .get((this.pokemonURL +  id), {
           params: {
           }
         })
         .then(response => {
+          this.$ls.set(cacheLabel, response.data, cacheExpiry);
+          console.log('New query has been cached as: ' + cacheLabel);
           this.pokeResults = response.data;
           this.spriteURL = this.pokeResults.sprites.front_default;
+          this.showLoading = false; 
         })
         .catch(error => {
           this.messages.push({
             type: 'error',
-            text: error.message
+            text: "Error retrieving Pokémon data: " + error.message
           });
-       
+          this.showLoading = false; 
       });
+     }
 },
 // takes a URL in this form https://pokeapi.co/api/v2/evolution-chain/18/ and returns the id, 18 in this case
     getIDFromURL: function(url){
@@ -259,7 +299,7 @@ getSprite: function(id){
         let urlArray = url.split('');
         urlArray.pop();
         let idStart = urlArray.lastIndexOf('/');
-        console.log("urlArray: " + urlArray + " has length " + urlArray.length + "and idStart of " + idStart);
+        //console.log("urlArray: " + urlArray + " has length " + urlArray.length + "and idStart of " + idStart);
         return urlArray.splice(idStart+1,urlArray.length).join('');
       } else {
         return url;
@@ -277,6 +317,9 @@ body {
   background-color: white;
 }
 
+.form {
+  margin: 2rem 4rem;
+}
 .evolutions {
   border: 3px solid #c7a008;
   box-shadow: 2px 2px 8px 5px #c7a008;
@@ -305,6 +348,10 @@ body {
 
 .stage-2-column {
   background-color: #2a75bb;
+}
+
+.row {
+  margin: 1rem;
 }
 /* Clear floats after the columns */
 .row:after {
