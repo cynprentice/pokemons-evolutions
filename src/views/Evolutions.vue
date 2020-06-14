@@ -119,7 +119,7 @@ export default {
       hasStage1: false,
       stage2PokeEvos: [],
       hasStage2: false,
-      otherPokeEvos:[]
+      otherPokeEvos:[],
     };
   },
 
@@ -171,8 +171,14 @@ export default {
               }
              })
             .then(response => {           
-              this.$ls.set(cacheLabel, response.data, cacheExpiry);
-              console.log('New query has been cached as: ' + cacheLabel);
+              try {
+                  this.$ls.set(cacheLabel, response.data, cacheExpiry);
+                  console.log('New query has been cached as: ' + cacheLabel);
+              } catch (domException) {
+                  if (['QuotaExceededError', 'NS_ERROR_DOM_QUOTA_REACHED'].includes(domException.name)) {
+                    console.log("cache full. " + cacheLabel + " not cached");
+                  }
+              }
               this.pokemonSpeciesResults = response.data
               this.setPokemonSpecies();
               this.showLoading = false;
@@ -204,7 +210,7 @@ export default {
 
     //make API call to get evolution chain data
     getEvolutionChainData: function() {
-      let cacheLabel = 'evolutionChain_' + this.query;
+      let cacheLabel = 'evolutionChain_' + this.nationalPokedexNumber;
       let cacheExpiry = 15 * 60 * 1000; // 15 minutes
       
       if (this.$ls.get(cacheLabel)){
@@ -217,8 +223,14 @@ export default {
         axios
           .get(evolutionChainURL + this.evolutionChainId, {})
           .then(response => {
-            this.$ls.set(cacheLabel, response.data, cacheExpiry);
-            console.log('New query has been cached as: ' + cacheLabel);
+            try {
+              this.$ls.set(cacheLabel, response.data, cacheExpiry);
+              console.log('New query has been cached as: ' + cacheLabel);
+              } catch (domException) {
+                if (['QuotaExceededError', 'NS_ERROR_DOM_QUOTA_REACHED'].includes(domException.name)) {
+                  console.log("cache full. " + cacheLabel + " not cached");
+                }
+            }
             this.evolutionChainResults = response.data;
             this.setEvolutionChain();
             this.showLoading = false;
@@ -288,8 +300,14 @@ export default {
           }
         })
         .then(response => {
-          this.$ls.set(cacheLabel, response.data, cacheExpiry);
-          console.log('New query has been cached as: ' + cacheLabel);
+          try{
+            this.$ls.set(cacheLabel, response.data, cacheExpiry);
+            console.log('New query has been cached as: ' + cacheLabel);
+            } catch (domException) {
+                if (['QuotaExceededError', 'NS_ERROR_DOM_QUOTA_REACHED'].includes(domException.name)) {
+                  console.log("cache full. " + cacheLabel + " not cached");
+                }
+            }
           this.pokeResults = response.data;
           this.spriteURL = this.pokeResults.sprites.front_default;
           this.showLoading = false; 

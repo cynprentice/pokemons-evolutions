@@ -8,7 +8,7 @@
     </div>
       <carousel :per-page="1" >
       <slide v-for="card in pokeCardResults" :key="card.id">
-             <img class="card-image" v-bind:src="card.imageUrl">
+             <img class="card-image" v-bind:src="card.imageUrlHiRes">
               <p class="card-caption"> <strong>Set:</strong> {{card.set}} <strong>ID:</strong> {{card.id}} </p>
          <p class="card-caption"><strong>Rarity:</strong> {{card.rarity}}<strong> Artist:</strong> {{card.artist}}</p>
     </slide>
@@ -60,8 +60,14 @@ export default {
           }
         })
         .then(response => {
-          this.$ls.set(cacheLabel, response.data.cards, cacheExpiry);
-          console.log('New query has been cached as: ' + cacheLabel);
+          try{
+            this.$ls.set(cacheLabel, response.data.cards, cacheExpiry);
+            console.log('New query has been cached as: ' + cacheLabel);
+          } catch (domException) {
+              if (['QuotaExceededError', 'NS_ERROR_DOM_QUOTA_REACHED'].includes(domException.name)) {
+                console.log("cache full. " + cacheLabel + " not cached");
+              }
+          }
           this.pokeCardResults = response.data.cards;
           this.showLoading = false;
         })
@@ -83,7 +89,7 @@ export default {
     margin-left: auto;
     margin-right: auto;
     width: 90%;
-    max-width: 250px;
+    max-width: 550px;
   }
 
   .card-caption {

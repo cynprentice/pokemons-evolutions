@@ -108,8 +108,14 @@ created () {
           }
         })
         .then(response => {
-          this.$ls.set(cacheLabel, response.data, cacheExpiry);
-          console.log('New query has been cached as: ' + cacheLabel);
+          try {
+            this.$ls.set(cacheLabel, response.data, cacheExpiry);
+            console.log('New query has been cached as: ' + cacheLabel);
+          } catch (domException) {
+              if (['QuotaExceededError', 'NS_ERROR_DOM_QUOTA_REACHED'].includes(domException.name)) {
+                console.log("cache full. " + cacheLabel + " not cached");
+              }
+          }
           this.pokeResults = response.data;
           this.setPokemonData();
           this.showLoading = false; 
